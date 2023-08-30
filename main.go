@@ -13,13 +13,13 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-	"bufio"
+	// "bufio"
 )
 
 // HTML content funcs:
 func get_about_content() string {
 	// Make about content? Giant string?
-	about_content := "<h1> About Tiddies </h1>"
+	about_content := "    <h1> About Tiddies </h1>\n"
 
 	// return
 	return about_content
@@ -37,22 +37,53 @@ func indexHandler(respWriter http.ResponseWriter, req *http.Request){
 }
 
 func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
+	head := `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trash Puppy | Home</title>
+    <link rel="stylesheet" href="stylesheet.css" />
+  </head>
+`
+
+	body_open := "  <body>\n"
+	body_close := "  </body>\n"
+	closing_tags := `</html>`
+
 	// get the new content for index.html:
 	about_html := get_about_content()
-	fmt.Printf("About: " + about_html)
 
 	// modify index.html
 	// modify_index := modify_index_html() // this should return an HTML file/ change the index.html file in root dir
+	// index_file, err := os.OpenFile("index.html", os.O_RDWR, 0666) // filemode == linux perms??
+	// if err != nil {
+	// 	fmt.Printf("ERROR: line 40 :)")
+	// 	return
+	// }
+
 	index_file, err := os.OpenFile("index.html", os.O_RDWR, 0666) // filemode == linux perms??
 	if err != nil {
-		fmt.Printf("ERROR: line 40 :)")
+		fmt.Printf("ERROR: line 67 :)")
 		return
 	}
-	
-	
+
+	index_file.Truncate(0)
+
+	// Write new content to file:
+	_, err = index_file.WriteString(head + body_open + about_html + body_close + closing_tags)
+	if err != nil {
+		fmt.Printf("ERROR: line 76 :)")
+		return
+	}
+
+	// Close file:
+	index_file.Close()
 
 	// HERE
 
+	// if assign; expr { error_handling },
 
 
 	// // ** file.WriteAt <-- writes starting at a specific length of bytes into file (need length offset)
@@ -78,7 +109,7 @@ func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
 	// }
 	// fmt.Printf("byte offset var ", bytes_offset)
 
-	defer index_file.Close()
+	// defer index_file.Close()
 
 	// Use byte offset to set where we edit file...
 	// about_html = "    " + about_html
@@ -88,10 +119,10 @@ func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
 	// 	return
 	// }
 
-	index_file.WriteAt([]byte("\n" + about_html), int64(bytes_offset));
+	// index_file.WriteAt([]byte("\n" + about_html), int64(bytes_offset));
 
-	// Close file:
-	index_file.Close()
+	// // Close file:
+	// index_file.Close()
 
 
 
