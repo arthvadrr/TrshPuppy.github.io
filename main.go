@@ -16,26 +16,7 @@ import (
 	// "bufio"
 )
 
-// HTML content funcs:
-func get_about_content() string {
-	// Make about content? Giant string?
-	about_content := "    <h1> About Tiddies </h1>\n"
-
-	// return
-	return about_content
-}
-
-// // Create template from parsed index.html:
-// var tpl = template.Must(template.ParseFiles("index.html"))
-
-func indexHandler(respWriter http.ResponseWriter, req *http.Request){
-	// Create template from parsed index.html:
-	var tpl = template.Must(template.ParseFiles("index.html"))
-	tpl.Execute(respWriter, nil)
-}
-
-func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
-	head := `<!DOCTYPE html>
+var head = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -46,12 +27,36 @@ func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
   </head>
 `
 
-	body_open := "  <body>\n"
-	body_close := "  </body>\n"
-	closing_tags := `</html>`
+var body_open = "  <body>\n"
+var body_close = "  </body>\n"
+var closing_tags = `</html>`
 
+type HTML_Handler struct {
+	path_content_cb func()
+}
+
+// HTML content funcs:
+func get_about_content() string {
+	// Make about content? Giant string?
+	about_content := `
+      <h1> About Tiddies </h1>
+      <a href="/"><button type="button">About</button></a>
+	`
+	return about_content
+}
+
+func get_root_content() string {
+	// Make root content
+	root_content := `
+	<h1> About Root </h1>
+	<a href="/about"><button type="button">About</button></a>
+  `
+  return root_content
+}
+
+func (h *HTML_Handler) content_handler(respWriter http.ResponseWriter, req *http.Request){
 	// get the new content for index.html:
-	about_html := get_about_content()
+	path_html := h.path_content_cb()
 
 	index_file, err := os.OpenFile("index.html", os.O_RDWR, 0666) // filemode == linux perms??
 	if err != nil {
@@ -62,7 +67,7 @@ func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
 	index_file.Truncate(0)
 
 	// Write new content to file:
-	_, err = index_file.WriteString(head + body_open + about_html + body_close + closing_tags)
+	_, err = index_file.WriteString(head + body_open + path_html + body_close + closing_tags)
 	if err != nil {
 		fmt.Printf("ERROR: line 76 :)")
 		return
@@ -76,7 +81,6 @@ func aboutHandler(respWriter http.ResponseWriter, req *http.Request){
 	var tpl = template.Must(template.ParseFiles("index.html"))
 	tpl.Execute(respWriter, nil)
 }
-
 
 func main(){
 	fmt.Println("Main has started...")
@@ -98,10 +102,13 @@ func main(){
 	HTTPMux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// ** Tell the server which function to call to handle request to the root/index path
-	HTTPMux.HandleFunc("/", indexHandler)
-	HTTPMux.HandleFunc("/about", aboutHandler)
+	// struct_instance := HTML_Handler{
+	// 	path_content_cb: get_about_content(),
+	// }
+	//HTTPMux.HandleFunc("/", struct_instance)
+	// HTTPMux.HandleFunc("/about", &HTML_Handler{path_content_cb: get_about_content})
+	HTTPMux.HandleFunc("/about", &HTML_Handler{path_content_cb: func(){get_about_content()},})
 
-	
 	// Have server listen at address:port
 	http.ListenAndServe(Server.address + ":" + Server.port, HTTPMux)
 	
